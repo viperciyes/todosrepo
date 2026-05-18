@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:           #0a0f14;
+      --surface:      #111820;
+      --surface-el:   #1a242e;
+      --card:         #1e2936;
+      --card-hover:   #243042;
+      --border:       #2a3847;
+      --border-subtle: #1e2a36;
+      --text-primary: #F1F5F9;
+      --text-sec:     #8fa3b8;
+      --text-muted:   #5a7089;
+      --blue:         #3B82F6;
+      --blue-dim:     #1a2d4a;
+      --blue-glow:    rgba(59, 130, 246, 0.25);
+      --green:        #22C55E;
+      --green-dim:    #0d2218;
+      --green-glow:   rgba(34, 197, 94, 0.2);
+      --red:          #EF4444;
+      --red-dim:      #2a1010;
+      --red-glow:     rgba(239, 68, 68, 0.2);
+      --yellow:       #F59E0B;
+      --yellow-dim:   #451a03;
+      --yellow-glow:  rgba(245, 158, 11, 0.2);
+      --cyan:         #22D3EE;
+      --cyan-dim:     #0D2A2E;
+      --purple:       #A78BFA;
+      --purple-dim:   #2E1065;
+      --purple-glow:  rgba(167, 139, 250, 0.2);
+      --orange:       #FB923C;
+      --orange-dim:   #2A1400;
+      --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
+      --sidebar-w: 284px;
+      --panel-w:   380px;
+      --header-h:  58px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+      --shadow-glow: 0 0 20px var(--blue-glow);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 20% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(167, 139, 250, 0.04) 0%, transparent 50%);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 17px;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    .header {
+      flex-shrink: 0;
+      height: var(--header-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      gap: 20px;
+      z-index: 200;
+      backdrop-filter: blur(8px);
+    }
+    .header-title { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; }
+    .header-title span { color: var(--blue); }
+
+    /* header search - centered via space-between */
+    .header-search {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      min-width: 0;
+    }
+    .header-search-inner {
+      max-width: 340px;
+      width: 100%;
+      position: relative;
+    }
+    .search-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--text-muted);
+    }
+    .header-search-input {
+      width: 100%;
+      background: var(--surface-el);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 16px;
+      padding: 9px 12px 9px 34px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .header-search-input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+    .header-search-input::placeholder { color: var(--text-muted); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+    .save-ind { font-size: 17px; color: var(--text-muted); white-space: nowrap; font-weight: 500; min-width: 60px; text-align: right; }
+    .save-ind.saving { color: var(--yellow); }
+    .save-ind.saved  { color: var(--green); }
+    .save-ind.error  { color: var(--red); }
+
+    button {
+      cursor: pointer; border: none;
+      font-family: inherit; font-size: 16px; font-weight: 500;
+      transition: all .15s;
+    }
+    button:hover { opacity: 1; }
+    .btn { padding: 8px 16px; border-radius: var(--r-sm); }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: #2563eb; box-shadow: var(--shadow-md); }
+    .btn-ghost   { background: var(--surface-el); color: var(--text-sec); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--card); border-color: var(--text-muted); }
+
+    /* ── Body layout ─────────────────────────────────────────── */
+    .body-wrap {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: row;
+      overflow: hidden;
+    }
+
+    /* ── Role filter strip ───────────────────────────────────── */
+    .role-strip {
+      width: 40px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 12px 4px;
+      border-right: 1px solid var(--border-subtle);
+    }
+    .role-btn {
+      writing-mode: vertical-lr;
+      transform: rotate(180deg);
+      padding: 10px 5px;
+      border-radius: var(--r-sm);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: transparent;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+      transition: all .15s;
+      white-space: nowrap;
+      line-height: 1;
+      width: 100%;
+    }
+    .role-btn:hover { background: var(--surface-el); color: var(--text-sec); border-color: var(--border); opacity: 1; }
+    .role-btn.active { background: var(--blue-dim); color: var(--blue); border-color: var(--blue); box-shadow: 0 0 8px var(--blue-glow); }
+
+    /* ── Role chips on cards ─────────────────────────────────── */
+    .role-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+    .role-chip {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; padding: 2px 7px; border-radius: 99px;
+      background: var(--surface); color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* ── Sidebar tab content ─────────────────────────────────── */
+    .sidebar-tabs-wrap {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 12px 16px;
+      gap: 0;
+      overflow-y: auto;
+    }
+    .sidebar-spacer { flex: 1; }
+    .sidebar-reload {
+      padding: 11px 16px;
+      border-radius: var(--r-sm);
+      font-size: 15px;
+      color: var(--text-muted);
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      margin-top: 8px;
+      border: 1px solid transparent;
+    }
+    .sidebar-reload:hover { background: var(--surface-el); color: var(--text-sec); border-color: var(--border); opacity: 1; }
+
+    /* tab cards */
+    .tab-card {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md);
+      padding: 12px 14px 12px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all .18s ease;
+      background: var(--surface-el);
+    }
+    .tab-card:hover { border-color: var(--blue); background: var(--card); transform: translateX(2px); }
+    .tab-card.active { border-color: var(--blue); background: linear-gradient(135deg, var(--blue-dim) 0%, var(--surface-el) 100%); box-shadow: 0 0 0 1px var(--blue-glow); }
+    .tab-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .tab-card-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+    .tab-card.active .tab-card-name { color: var(--blue); }
+    .tab-card-total {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--surface);
+      padding: 2px 10px;
+      border-radius: 99px;
+      letter-spacing: 0.02em;
+    }
+    .tab-card.active .tab-card-total { color: var(--blue); background: var(--blue-dim); }
+    .tab-groups { display: flex; flex-direction: column; gap: 4px; }
+    .tab-group-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      padding: 2px 0;
+    }
+    .tab-group-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 6px currentColor;
+    }
+    .tab-group-name { flex: 1; color: var(--text-sec); font-weight: 500; }
+    .tab-group-num  { font-weight: 700; color: var(--text-muted); font-size: 13px; }
+
+    /* ── Main content ────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+    }
+
+    /* empty / open-screen */
+    .open-screen {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 60vh; gap: 18px; text-align: center;
+    }
+    .open-screen h2  { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+    .open-screen p   { font-size: 17px; color: var(--text-muted); max-width: 400px; line-height: 1.7; }
+    .open-icon { opacity: .6; margin-bottom: 6px; }
+    .empty { text-align: center; padding: 100px 24px; color: var(--text-muted); font-size: 17px; }
+
+    /* group section */
+    .group-section { margin-bottom: 36px; }
+    .group-heading {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .cards-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    /* ── Card ────────────────────────────────────────────────── */
+    .card {
+      position: relative;
+      width: 272px;
+      flex-shrink: 0;
+      background: var(--surface-el);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--card-color, #3B82F6);
+      border-radius: var(--r-md);
+      overflow: visible;
+      cursor: pointer;
+      transition: all .18s ease;
+user-select: none;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card.selected {
+      background: var(--card);
+      box-shadow: var(--shadow-lg), 0 0 0 1.5px var(--card-color, #3B82F6), 0 0 24px var(--card-glow, var(--blue-glow));
+      z-index: 10;
+    }
+    .card:hover {
+      background: var(--card-hover);
+      border-color: var(--card-color, #3B82F6);
+      box-shadow: var(--shadow-md), 0 0 0 1px var(--card-color, #3B82F6);
+      transform: translateY(-2px);
+    }
+    .card.selected {
+      background: var(--card);
+      box-shadow: var(--shadow-lg), 0 0 0 1.5px var(--card-color, #3B82F6), 0 0 24px var(--card-glow, var(--blue-glow));
+      z-index: 10;
+    }
+    .card.superseded .card-title { color: var(--text-muted); text-decoration: line-through; }
+
+    /* colored top strip — bg set inline via group color */
+    .card-top {
+      font-size: 14px;
+      font-weight: 700;
+      padding: 9px 42px 9px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: .02em;
+      background: linear-gradient(135deg, var(--card-color, #3B82F6) 0%, transparent 100%);
+      background-size: 200% 100%;
+      transition: background-position .2s;
+    }
+    .card:hover .card-top { background-position: 100% 0; }
+    .card-top .inprog {
+      font-size: 12px;
+      background: rgba(255,255,255,.2);
+      backdrop-filter: blur(4px);
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .card-body-pad { padding: 14px 18px 16px; }
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.45;
+      letter-spacing: -0.01em;
+    }
+
+    /* ── Gear button & dropdown ──────────────────────────────── */
+    .card-gear {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      width: 30px;
+      height: 30px;
+      border-radius: var(--r-sm);
+      background: rgba(0,0,0,.35);
+      border: none;
+      color: rgba(255,255,255,.6);
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      backdrop-filter: blur(4px);
+      transition: all .15s;
+    }
+    .card-gear:hover { color: #fff; background: rgba(0,0,0,.55); transform: rotate(30deg); opacity: 1; }
+    .card-gear.open  { color: #fff; background: rgba(59, 130, 246, 0.4); transform: rotate(90deg); }
+
+    .gear-menu {
+      position: absolute;
+      top: 42px;
+      right: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 6px;
+      z-index: 50;
+      min-width: 168px;
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(12px);
+    }
+    .gear-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 6px 12px 10px;
+    }
+    .gear-opt {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: var(--r-sm);
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-sec);
+      background: transparent;
+      text-align: left;
+    }
+    .gear-opt:hover { background: var(--surface-el); color: var(--text-primary); opacity: 1; }
+    .gear-opt.cur   { color: var(--text-primary); font-weight: 600; }
+    .gear-dot { width: 7px; height: 7px; border-radius: 99px; flex-shrink: 0; box-shadow: 0 0 5px currentColor; }
+
+    /* ── Right panel ─────────────────────────────────────────── */
+    .panel {
+      position: fixed;
+      top: var(--header-h);
+      right: 0;
+      bottom: 0;
+      width: var(--panel-w);
+      background: rgba(17, 24, 32, 0.95);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform .25s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 150;
+      backdrop-filter: blur(16px);
+      box-shadow: -8px 0 32px rgba(0,0,0,0.4);
+    }
+    .panel.open { transform: translateX(0); }
+
+    .panel-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 22px 22px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .panel-header-text { flex: 1; position: relative; }
+    .panel-group-label {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+    }
+    .panel-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .panel-title {
+      font-size: 19px;
+      font-weight: 700;
+      line-height: 1.4;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .panel-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .panel-gear {
+      flex-shrink: 0;
+      background: var(--surface-el);
+      color: var(--text-muted);
+      border-radius: var(--r-sm);
+      width: 34px; height: 34px;
+      font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border);
+      transition: all .15s;
+    }
+    .panel-gear:hover { background: var(--card); color: var(--text-primary); border-color: var(--text-muted); }
+    .panel-gear.open { color: var(--blue); border-color: var(--blue); }
+    .copy-btn {
+      flex-shrink: 0;
+      background: var(--surface-el);
+      color: var(--text-muted);
+      border-radius: var(--r-sm);
+      width: 30px; height: 30px;
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border);
+      transition: all .15s;
+    }
+    .copy-btn:hover { background: var(--card); color: var(--text-primary); border-color: var(--text-muted); }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+    .panel-close {
+      flex-shrink: 0;
+      background: var(--surface-el);
+      color: var(--text-muted);
+      border-radius: var(--r-sm);
+      width: 34px; height: 34px;
+      font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border);
+      transition: all .15s;
+    }
+    .panel-close:hover { background: var(--card); color: var(--text-primary); border-color: var(--text-muted); }
+
+    .panel-gear-menu {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 6px;
+      z-index: 60;
+      min-width: 168px;
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(12px);
+      margin-top: 8px;
+    }
+    .panel-gear-menu .gear-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 6px 12px 10px;
+    }
+    .panel-gear-menu .gear-opt {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: var(--r-sm);
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-sec);
+      background: transparent;
+      text-align: left;
+    }
+    .panel-gear-menu .gear-opt:hover { background: var(--surface-el); color: var(--text-primary); opacity: 1; }
+    .panel-gear-menu .gear-opt.cur { color: var(--text-primary); font-weight: 600; }
+    .panel-gear-menu .gear-dot { width: 7px; height: 7px; border-radius: 99px; flex-shrink: 0; box-shadow: 0 0 5px currentColor; }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .field-block {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .field-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .field-header .field-label {
+      margin-bottom: 0;
+    }
+    .field-btns {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .desc-text {
+      font-size: 16px;
+      color: var(--text-sec);
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+    .note-textarea {
+      width: 100%;
+      background: var(--surface-el);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 16px;
+      line-height: 1.6;
+      padding: 13px 15px;
+      resize: vertical;
+      min-height: 90px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .note-textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+    .note-textarea::placeholder { color: var(--text-muted); }
+
+    .panel-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .act-btn {
+      padding: 10px 15px;
+      border-radius: var(--r-sm);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .act-todo        { background: var(--surface-el); color: var(--text-sec); border: 1px solid var(--border); }
+    .act-todo:hover  { background: var(--card); border-color: var(--text-muted); }
+    .act-progress    { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue); }
+    .act-progress:hover { background: var(--blue); color: #fff; box-shadow: 0 0 16px var(--blue-glow); }
+    .act-decision    { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--yellow); }
+    .act-decision:hover { background: var(--yellow); color: #000; }
+    .act-done        { background: var(--green-dim);  color: var(--green);  border: 1px solid var(--green); }
+    .act-done:hover  { background: var(--green); color: #000; box-shadow: 0 0 16px var(--green-glow); }
+    .act-futuristic  { background: var(--purple-dim); color: var(--purple); border: 1px solid var(--purple); }
+    .act-futuristic:hover { background: var(--purple); color: #fff; box-shadow: 0 0 16px var(--purple-glow); }
+    .act-supersede   { background: var(--red-dim);    color: var(--red);    border: 1px solid var(--red); }
+    .act-supersede:hover { background: var(--red); color: #fff; box-shadow: 0 0 16px var(--red-glow); }
+
+    .panel-footer {
+      flex-shrink: 0;
+      padding: 16px 22px;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">Tasks <span>·</span> <span id="headerProjectName">…</span></div>
+  <div class="header-search-inner" id="headerSearch" style="display:none">
+    <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/>
+    </svg>
+    <input class="header-search-input" id="searchInput" type="search"
+      placeholder="Search tasks…"
+      oninput="onSearch(this.value)">
+  </div>
+  <div class="header-right">
+    <span class="save-ind" id="saveInd"></span>
+    <button class="btn btn-ghost" id="headerBtn" onclick="openFolder()" style="display:none">⇄ Change folder</button>
+  </div>
+</div>
+
+<div class="body-wrap">
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="role-strip" id="roleStrip"></div>
+    <div class="sidebar-tabs-wrap">
+      <div id="sidebarTabs"></div>
+      <div class="sidebar-spacer"></div>
+      <button class="sidebar-reload" onclick="reloadFromDir()">↺ Reload</button>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main" id="main">
+    <div class="open-screen" id="openScreen">
+      <svg class="open-icon" width="64" height="64" fill="none" viewBox="0 0 24 24" stroke="#3B82F6" stroke-width="1.2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776"/>
+      </svg>
+      <h2 id="openTitle">Loading…</h2>
+      <p id="openDesc"></p>
+      <button class="btn btn-primary" id="openBtn" style="display:none" onclick="openFolder()">Open todos folder</button>
+    </div>
+  </main>
+
+  <!-- Right panel -->
+  <aside class="panel" id="panel">
+    <div class="panel-header" id="panelHeader"></div>
+    <div class="panel-body"   id="panelBody"></div>
+    <div class="panel-footer" id="panelFooter"></div>
+  </aside>
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let dirHandle  = null;
+  let tasks      = [];
+  let activeTab     = null;
+  let selectedId    = null;
+  let openGearId    = null;
+  let openPanelGear = false;
+  let activeRole    = 'all';
+  let searchQuery   = '';
+  let saveTimeout   = null;
+
+  // ── Config (populated from config.json) ────────────────────────────────────
+  let CFG = {
+    projectName:     'Tasks',
+    groups:          [],
+    roles:           [],
+    statuses:        ['todo','in_progress','done'],
+    terminalStatuses:['done'],
+  };
+
+  // Palette for dynamic group colour assignment
+  const PALETTE = ['#3B82F6','#22D3EE','#A78BFA','#FB923C','#F59E0B','#22C55E','#EF4444','#64748B'];
+  let GROUP_COLOR = {};
+  let GROUP_ORDER = [];
+  let ROLES       = [];
+  let TABS        = [];
+
+  function applyConfig(cfg) {
+    CFG = Object.assign(CFG, cfg);
+
+    // Build group colour map from palette (cycle if more groups than colours)
+    GROUP_COLOR = {};
+    GROUP_ORDER = CFG.groups;
+    CFG.groups.forEach((g, i) => { GROUP_COLOR[g] = PALETTE[i % PALETTE.length]; });
+
+    // Build role list: always prepend "all"
+    ROLES = [{ id: 'all', label: 'All' }];
+    (CFG.roles || []).forEach(r => ROLES.push({ id: r, label: r.replace(/_/g,' ') }));
+
+    // Build TABS from statuses — non-terminal statuses get an "Active" meta-tab first
+    const nonTerminal = CFG.statuses.filter(s => !CFG.terminalStatuses.includes(s));
+    TABS = [];
+    if (nonTerminal.length > 1) {
+      // Meta-tab showing all non-terminal tasks
+      TABS.push({ id: '__active__', name: 'Active', match: t => nonTerminal.includes(t.status) });
+    }
+    CFG.statuses.forEach(s => {
+      TABS.push({ id: s, name: capitalize(s), match: t => t.status === s });
+    });
+
+    if (!activeTab) activeTab = TABS[0]?.id || null;
+
+    // Update page title and header
+    document.title = `Tasks · ${CFG.projectName}`;
+    document.getElementById('headerProjectName').textContent = CFG.projectName;
+
+    // Show/hide role strip based on whether roles are defined
+    document.getElementById('roleStrip').style.display =
+      CFG.roles.length === 0 ? 'none' : '';
+  }
+
+  function capitalize(s) {
+    return s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function groupColor(g) { return GROUP_COLOR[g] || '#64748B'; }
+
+  function roleFilteredTasks() {
+    if (activeRole === 'all') return tasks;
+    return tasks.filter(t => (t.roles || []).includes(activeRole));
+  }
+
+  function switchRole(role) {
+    activeRole = role;
+    openGearId = null;
+    closePanel();
+    renderAll();
+  }
+
+  function renderRoleStrip() {
+    if (CFG.roles.length === 0) return;
+    document.getElementById('roleStrip').innerHTML = ROLES.map(r => `
+      <button class="role-btn${activeRole === r.id ? ' active' : ''}"
+        onclick="switchRole('${r.id}')">${r.label}</button>
+    `).join('');
+  }
+
+  // ── IndexedDB ──────────────────────────────────────────────────────────────
+  function openDB() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('tasks-app', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('meta');
+      r.onsuccess = () => res(r.result);
+      r.onerror   = () => rej(r.error);
+    });
+  }
+  async function dbPut(key, value) {
+    const db = await openDB();
+    const tx = db.transaction('meta','readwrite');
+    tx.objectStore('meta').put(value, key);
+    return new Promise((res,rej) => { tx.oncomplete=res; tx.onerror=rej; });
+  }
+  async function dbGet(key) {
+    const db = await openDB();
+    return new Promise((res,rej) => {
+      const r = db.transaction('meta').objectStore('meta').get(key);
+      r.onsuccess = () => res(r.result||null);
+      r.onerror   = () => rej(r.error);
+    });
+  }
+
+  // ── Boot ───────────────────────────────────────────────────────────────────
+  async function boot() {
+    applyConfig({});
+    try {
+      const stored = await dbGet('dirHandle');
+      if (!stored) return showPickerScreen();
+      const perm = await stored.queryPermission({ mode: 'readwrite' });
+      if (perm === 'granted') { dirHandle = stored; await loadFromDir(); return; }
+      showResumeScreen(stored);
+    } catch { showPickerScreen(); }
+  }
+
+  function showPickerScreen() {
+    document.getElementById('openTitle').textContent = 'Open your todos folder';
+    document.getElementById('openDesc').textContent  = 'Select the folder containing tasks.json and config.json — auto-loads on every future visit.';
+    document.getElementById('openBtn').style.display = 'inline-block';
+  }
+  function showResumeScreen(stored) {
+    document.getElementById('openTitle').textContent = 'Resume session';
+    document.getElementById('openDesc').textContent  = 'Click to reload from last session.';
+    const btn = document.getElementById('openBtn');
+    btn.textContent   = 'Resume';
+    btn.style.display = 'inline-block';
+    btn.onclick = async () => {
+      const perm = await stored.requestPermission({ mode: 'readwrite' });
+      if (perm === 'granted') { dirHandle = stored; await loadFromDir(); }
+    };
+  }
+
+  // ── File I/O ───────────────────────────────────────────────────────────────
+  async function openFolder() {
+    try {
+      dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+      await dbPut('dirHandle', dirHandle);
+      await loadFromDir();
+    } catch(e) { if (e.name !== 'AbortError') console.error(e); }
+  }
+
+  async function loadFromDir() {
+    // Load config.json if present
+    try {
+      const cfgHandle = await dirHandle.getFileHandle('config.json');
+      const cfgFile   = await cfgHandle.getFile();
+      applyConfig(JSON.parse(await cfgFile.text()));
+    } catch { /* config.json not found — use defaults */ }
+
+    // Load tasks.json if present
+    try {
+      const tasksHandle = await dirHandle.getFileHandle('tasks.json');
+      const tasksFile   = await tasksHandle.getFile();
+      const data = JSON.parse(await tasksFile.text());
+      tasks = data.tasks || [];
+    } catch { tasks = []; }
+
+    document.getElementById('headerBtn').style.display    = 'inline-block';
+    document.getElementById('headerSearch').style.display = 'block';
+    document.getElementById('openScreen').style.display   = 'none';
+    renderAll();
+  }
+
+  async function reloadFromDir() {
+    if (!dirHandle) return;
+    await loadFromDir();
+  }
+
+  async function saveToFile() {
+    if (!dirHandle) return;
+    setSave('saving');
+    try {
+      const handle = await dirHandle.getFileHandle('tasks.json', { create: true });
+      const w = await handle.createWritable();
+      await w.write(JSON.stringify({ version: 1, tasks }, null, 2));
+      await w.close();
+      setSave('saved');
+    } catch(e) { console.error(e); setSave('error'); }
+  }
+  function scheduleSave() {
+    setSave('saving');
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(saveToFile, 700);
+  }
+  function setSave(s) {
+    const el = document.getElementById('saveInd');
+    el.className = 'save-ind ' + s;
+    el.textContent = s==='saving'?'Saving…':s==='saved'?'Saved ✓':'⚠ Error';
+    if (s==='saved') setTimeout(()=>{ el.textContent=''; el.className='save-ind'; }, 2200);
+  }
+
+  // ── Rendering ──────────────────────────────────────────────────────────────
+  function renderAll() {
+    renderRoleStrip();
+    renderSidebar();
+    renderMain();
+  }
+
+  function renderSidebar() {
+    document.getElementById('sidebarTabs').innerHTML = TABS.map(tab => {
+      const tabTasks = roleFilteredTasks().filter(tab.match);
+      const total    = tabTasks.length;
+
+      // Count per group for this tab
+      const groupCounts = {};
+      for (const t of tabTasks) {
+        const g = t.group || 'General';
+        groupCounts[g] = (groupCounts[g] || 0) + 1;
+      }
+      const groupRows = [...GROUP_ORDER.filter(g => groupCounts[g]),
+                         ...Object.keys(groupCounts).filter(g => !GROUP_ORDER.includes(g))]
+        .map(g => `
+          <div class="tab-group-row">
+            <span class="tab-group-dot" style="background:${groupColor(g)}"></span>
+            <span class="tab-group-name">${g}</span>
+            <span class="tab-group-num">${groupCounts[g]}</span>
+          </div>
+        `).join('');
+
+      return `
+        <div class="tab-card${activeTab===tab.id?' active':''}" onclick="switchTab('${tab.id}')">
+          <div class="tab-card-header">
+            <span class="tab-card-name">${tab.name}</span>
+            <span class="tab-card-total">${total}</span>
+          </div>
+          ${total > 0 ? `<div class="tab-groups">${groupRows}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderMain() {
+    const main = document.getElementById('main');
+
+    const tabDef = TABS.find(t => t.id === activeTab) || TABS[0];
+    let filtered = roleFilteredTasks().filter(tabDef.match);
+
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      filtered = roleFilteredTasks().filter(t =>
+        t.title.toLowerCase().includes(q) ||
+        (t.description||'').toLowerCase().includes(q)
+      );
+    }
+
+    if (filtered.length === 0) {
+      main.innerHTML = `<div class="empty">${q ? 'No results for "'+esc(q)+'".' : 'No tasks here yet.'}</div>`;
+      return;
+    }
+
+    const buckets = {};
+    for (const t of filtered) {
+      const g = t.group || 'General';
+      (buckets[g] = buckets[g]||[]).push(t);
+    }
+    const order = [...GROUP_ORDER.filter(g=>buckets[g]), ...Object.keys(buckets).filter(g=>!GROUP_ORDER.includes(g))];
+
+    main.innerHTML = order.map(g => `
+      <div class="group-section">
+        <div class="group-heading" style="color:${groupColor(g)}">${esc(g)}</div>
+        <div class="cards-grid">${buckets[g].map(t => cardHTML(t)).join('')}</div>
+      </div>
+    `).join('');
+  }
+
+  function cardHTML(t) {
+    const color = groupColor(t.group);
+    const glow  = color + '40';
+    const isSelected   = t.id === selectedId;
+    const isInProgress = t.status === 'in_progress';
+    const gearOpen     = openGearId === t.id;
+
+    const gearMenu = gearOpen ? `
+      <div class="gear-menu" onclick="event.stopPropagation()">
+        <div class="gear-label">Move to group</div>
+        ${GROUP_ORDER.map(g => `
+          <button class="gear-opt${t.group===g?' cur':''}"
+            onclick="changeGroup(event,'${t.id}','${esc(g)}')">
+            <span class="gear-dot" style="background:${groupColor(g)}"></span>${esc(g)}
+          </button>
+        `).join('')}
+      </div>
+    ` : '';
+
+    return `
+      <div class="card${isSelected?' selected':''}${t.status==='superseded'?' superseded':''}"
+           style="--card-color:${color}; --card-glow:${glow}"
+           onclick="selectCard('${t.id}')">
+        <div class="card-top" style="background:linear-gradient(135deg, ${color}30 0%, transparent 100%); color:${color};">
+          ${esc(t.group||'General')}
+          ${isInProgress ? '<span class="inprog">▶ In Progress</span>' : ''}
+          ${isSelected ? `
+            <button class="card-gear${gearOpen?' open':''}"
+              onclick="toggleGear(event,'${t.id}')" title="Change group">⚙</button>
+            ${gearMenu}
+          ` : ''}
+        </div>
+        <div class="card-body-pad">
+          <div class="card-title">${esc(t.title)}</div>
+          ${(t.roles||[]).length > 0 ? `<div class="role-chips">${(t.roles||[]).map(r=>`<span class="role-chip">${esc(r.replace(/_/g,' '))}</span>`).join('')}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Panel ──────────────────────────────────────────────────────────────────
+  function selectCard(id) {
+    openGearId = null;
+    openPanelGear = false;
+    selectedId = id;
+    openPanel(tasks.find(t => t.id === id));
+    renderMain();
+  }
+
+  function togglePanelGear(id) {
+    openPanelGear = !openPanelGear;
+    openPanel(tasks.find(t => t.id === id));
+  }
+
+  function toggleGear(event, id) {
+    event.stopPropagation();
+    openGearId = openGearId === id ? null : id;
+    renderMain();
+  }
+
+  function changeGroup(event, id, group) {
+    event.stopPropagation();
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    task.group     = group;
+    task.updatedAt = today();
+    openGearId = null;
+    openPanelGear = false;
+    scheduleSave();
+    renderAll();
+    if (selectedId === id) openPanel(task); // refresh panel header color
+  }
+
+  function onSearch(value) {
+    searchQuery = value;
+    openGearId  = null;
+    openPanelGear = false;
+    renderMain();
+  }
+
+  function openPanel(task) {
+    if (!task) return;
+    const color = groupColor(task.group);
+
+    document.getElementById('panelHeader').innerHTML = `
+      <div class="panel-header-text">
+        <div class="panel-group-label" style="color:${color}">${esc(task.group||'General')}</div>
+        <div class="panel-title-row">
+          <div class="panel-title">${esc(task.title)}</div>
+          <button class="copy-btn" data-copy="${esc(task.title)}" title="Copy title">📋</button>
+        </div>
+      </div>
+      <button class="panel-close" onclick="closePanel()">×</button>
+    `;
+
+    document.getElementById('panelBody').innerHTML = `
+      ${task.description ? `
+        <div class="field-block">
+          <div class="field-header">
+            <div class="field-label">Description</div>
+            <div class="field-btns">
+              <button class="copy-btn" data-copy="${esc(task.description)}" title="Copy description">📋</button>
+              <button class="panel-gear${openPanelGear?' open':''}" title="Change group" onclick="togglePanelGear('${task.id}')">⚙</button>
+            </div>
+          </div>
+          <div class="desc-text">${esc(task.description)}</div>
+        </div>
+        ${openPanelGear ? `
+          <div class="panel-gear-menu">
+            <div class="gear-label">Move to group</div>
+            ${GROUP_ORDER.map(g => `
+              <button class="gear-opt${task.group===g?' cur':''}"
+                onclick="changeGroup(event,'${task.id}','${esc(g)}')">
+                <span class="gear-dot" style="background:${groupColor(g)}"></span>${esc(g)}
+              </button>
+            `).join('')}
+          </div>
+        ` : ''}
+      ` : ''}
+      <div class="field-block">
+        <div class="field-header">
+          <div class="field-label">Status Note</div>
+          <button class="copy-btn" data-copy="${esc(task.statusNote||'')}" title="Copy status note">📋</button>
+        </div>
+        <textarea class="note-textarea"
+          placeholder="Progress notes, blockers, context…"
+          oninput="updateNote('${task.id}', this.value)"
+        >${esc(task.statusNote||'')}</textarea>
+      </div>
+      <div class="field-block">
+        <div class="field-label">Move to</div>
+        <div class="panel-actions">${actionButtons(task)}</div>
+      </div>
+    `;
+
+    document.querySelectorAll('.panel-body .copy-btn[data-copy]').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const text = this.getAttribute('data-copy').replace(/&#39;/g, "'");
+        copyText(this, text);
+      });
+    });
+
+    document.getElementById('panelFooter').textContent =
+      `${task.id}  ·  Created ${task.createdAt||'—'}  ·  Updated ${task.updatedAt||'—'}`;
+
+    document.getElementById('panel').classList.add('open');
+  }
+
+  function closePanel() {
+    selectedId = null;
+    openPanelGear = false;
+    document.getElementById('panel').classList.remove('open');
+    renderMain();
+  }
+
+  function actionButtons(task) {
+    // Status colour palette cycles same as group palette
+    const statusColors = ['#8fa3b8','#3B82F6','#F59E0B','#A78BFA','#22C55E','#EF4444'];
+    return CFG.statuses
+      .filter(s => s !== task.status)
+      .map((s, i) => {
+        const isTerminal = CFG.terminalStatuses.includes(s);
+        const color = statusColors[CFG.statuses.indexOf(s) % statusColors.length];
+        return `<button class="act-btn" style="
+          background:${color}22; color:${color}; border:1px solid ${color};
+          ${isTerminal ? 'opacity:0.75;' : ''}
+        " onclick="setStatus('${task.id}','${esc(s)}')">${capitalize(s)}</button>`;
+      })
+      .join('');
+  }
+
+  // ── Mutations ──────────────────────────────────────────────────────────────
+  function setStatus(id, status) {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    task.status    = status;
+    task.updatedAt = today();
+    scheduleSave();
+    // If task moved out of current tab, close panel
+    const tabDef = TABS.find(t => t.id === activeTab);
+    const stillVisible = tabDef ? tabDef.match({ status }) : false;
+    if (!stillVisible) closePanel();
+    else openPanel(task); // refresh action buttons
+    renderSidebar();
+    renderMain();
+  }
+
+  function updateNote(id, value) {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    task.statusNote = value;
+    task.updatedAt  = today();
+    scheduleSave();
+  }
+
+  function switchTab(tab) {
+    activeTab  = tab;
+    openGearId = null;
+    closePanel();
+    renderAll();
+  }
+
+  // ── Utils ──────────────────────────────────────────────────────────────────
+  function today() { return new Date().toISOString().slice(0,10); }
+
+  function esc(s) {
+    return String(s??'')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+  }
+
+  async function copyText(btn, text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.classList.add('copied');
+      btn.textContent = '✓';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.textContent = '📋';
+      }, 1500);
+    } catch(e) { console.error(e); }
+  }
+
+  boot();
+</script>
+</body>
+</html>

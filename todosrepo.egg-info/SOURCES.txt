@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+todosrepo/__init__.py
+todosrepo/__main__.py
+todosrepo/cli.py
+todosrepo.egg-info/PKG-INFO
+todosrepo.egg-info/SOURCES.txt
+todosrepo.egg-info/dependency_links.txt
+todosrepo.egg-info/entry_points.txt
+todosrepo.egg-info/top_level.txt
+todosrepo/templates/BRIEF.md
+todosrepo/templates/INBOX.md
+todosrepo/templates/README.md
+todosrepo/templates/SETUP.md
+todosrepo/templates/SKILL.md
+todosrepo/templates/WORKFLOW.md
+todosrepo/templates/todos.html

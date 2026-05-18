@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "todosrepo"
+version = "1.0.0"
+description = "Lightweight, portable AI-agent task management — install into any project"
+requires-python = ">=3.8"
+
+[project.scripts]
+todos-init = "todosrepo.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["todosrepo*"]
+
+[tool.setuptools.package-data]
+todosrepo = ["templates/*"]

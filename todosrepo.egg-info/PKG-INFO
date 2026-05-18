@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: todosrepo
+Version: 1.0.0
+Summary: Lightweight, portable AI-agent task management — install into any project
+Requires-Python: >=3.8

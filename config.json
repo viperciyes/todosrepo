@@ -1,0 +1,7 @@
+{
+  "projectName": "",
+  "groups": ["General"],
+  "roles": [],
+  "statuses": ["todo", "in_progress", "done"],
+  "terminalStatuses": ["done"]
+}
