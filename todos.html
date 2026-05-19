@@ -122,11 +122,6 @@
       gap: 14px;
       flex-shrink: 0;
     }
-    .save-ind { font-size: 17px; color: var(--text-muted); white-space: nowrap; font-weight: 500; min-width: 60px; text-align: right; }
-    .save-ind.saving { color: var(--yellow); }
-    .save-ind.saved  { color: var(--green); }
-    .save-ind.error  { color: var(--red); }
-
     button {
       cursor: pointer; border: none;
       font-family: inherit; font-size: 16px; font-weight: 500;
@@ -664,7 +659,6 @@ user-select: none;
   </div>
   <div class="header-right">
     <span class="save-ind" id="saveInd"></span>
-    <button class="btn btn-ghost" id="headerBtn" onclick="openFolder()" style="display:none">⇄ Change folder</button>
   </div>
 </div>
 
@@ -688,7 +682,6 @@ user-select: none;
       </svg>
       <h2 id="openTitle">Loading…</h2>
       <p id="openDesc"></p>
-      <button class="btn btn-primary" id="openBtn" style="display:none" onclick="openFolder()">Open todos folder</button>
     </div>
   </main>
 
@@ -702,8 +695,7 @@ user-select: none;
 
 <script>
   // ── State ──────────────────────────────────────────────────────────────────
-  let dirHandle  = null;
-  let tasks      = [];
+  let tasks         = [];
   let activeTab     = null;
   let selectedId    = null;
   let openGearId    = null;
@@ -788,117 +780,36 @@ user-select: none;
     `).join('');
   }
 
-  // ── IndexedDB ──────────────────────────────────────────────────────────────
-  function openDB() {
-    return new Promise((res, rej) => {
-      const r = indexedDB.open('tasks-app', 1);
-      r.onupgradeneeded = () => r.result.createObjectStore('meta');
-      r.onsuccess = () => res(r.result);
-      r.onerror   = () => rej(r.error);
-    });
-  }
-  async function dbPut(key, value) {
-    const db = await openDB();
-    const tx = db.transaction('meta','readwrite');
-    tx.objectStore('meta').put(value, key);
-    return new Promise((res,rej) => { tx.oncomplete=res; tx.onerror=rej; });
-  }
-  async function dbGet(key) {
-    const db = await openDB();
-    return new Promise((res,rej) => {
-      const r = db.transaction('meta').objectStore('meta').get(key);
-      r.onsuccess = () => res(r.result||null);
-      r.onerror   = () => rej(r.error);
-    });
-  }
-
   // ── Boot ───────────────────────────────────────────────────────────────────
   async function boot() {
     applyConfig({});
+    await loadFiles();
+  }
+
+  async function loadFiles() {
     try {
-      const stored = await dbGet('dirHandle');
-      if (!stored) return showPickerScreen();
-      const perm = await stored.queryPermission({ mode: 'readwrite' });
-      if (perm === 'granted') { dirHandle = stored; await loadFromDir(); return; }
-      showResumeScreen(stored);
-    } catch { showPickerScreen(); }
+      const cfgResp = await fetch('./config.json');
+      if (cfgResp.ok) { try { applyConfig(await cfgResp.json()); } catch {} }
+
+      const tasksResp = await fetch('./tasks.json');
+      if (tasksResp.status === 404) { showError('tasks.json not found in this folder.'); return; }
+      if (!tasksResp.ok)            { showError('Could not load tasks.json (HTTP ' + tasksResp.status + ').'); return; }
+
+      tasks = (await tasksResp.json()).tasks || [];
+      document.getElementById('headerSearch').style.display = 'block';
+      document.getElementById('openScreen').style.display   = 'none';
+      renderAll();
+    } catch(e) {
+      showError('Could not reach the server. Is it running?\n' + e.message);
+    }
   }
 
-  function showPickerScreen() {
-    document.getElementById('openTitle').textContent = 'Open your todos folder';
-    document.getElementById('openDesc').textContent  = 'Select the folder containing tasks.json and config.json — auto-loads on every future visit.';
-    document.getElementById('openBtn').style.display = 'inline-block';
-  }
-  function showResumeScreen(stored) {
-    document.getElementById('openTitle').textContent = 'Resume session';
-    document.getElementById('openDesc').textContent  = 'Click to reload from last session.';
-    const btn = document.getElementById('openBtn');
-    btn.textContent   = 'Resume';
-    btn.style.display = 'inline-block';
-    btn.onclick = async () => {
-      const perm = await stored.requestPermission({ mode: 'readwrite' });
-      if (perm === 'granted') { dirHandle = stored; await loadFromDir(); }
-    };
+  function showError(msg) {
+    document.getElementById('openTitle').textContent = 'File not found';
+    document.getElementById('openDesc').textContent  = msg;
   }
 
-  // ── File I/O ───────────────────────────────────────────────────────────────
-  async function openFolder() {
-    try {
-      dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-      await dbPut('dirHandle', dirHandle);
-      await loadFromDir();
-    } catch(e) { if (e.name !== 'AbortError') console.error(e); }
-  }
-
-  async function loadFromDir() {
-    // Load config.json if present
-    try {
-      const cfgHandle = await dirHandle.getFileHandle('config.json');
-      const cfgFile   = await cfgHandle.getFile();
-      applyConfig(JSON.parse(await cfgFile.text()));
-    } catch { /* config.json not found — use defaults */ }
-
-    // Load tasks.json if present
-    try {
-      const tasksHandle = await dirHandle.getFileHandle('tasks.json');
-      const tasksFile   = await tasksHandle.getFile();
-      const data = JSON.parse(await tasksFile.text());
-      tasks = data.tasks || [];
-    } catch { tasks = []; }
-
-    document.getElementById('headerBtn').style.display    = 'inline-block';
-    document.getElementById('headerSearch').style.display = 'block';
-    document.getElementById('openScreen').style.display   = 'none';
-    renderAll();
-  }
-
-  async function reloadFromDir() {
-    if (!dirHandle) return;
-    await loadFromDir();
-  }
-
-  async function saveToFile() {
-    if (!dirHandle) return;
-    setSave('saving');
-    try {
-      const handle = await dirHandle.getFileHandle('tasks.json', { create: true });
-      const w = await handle.createWritable();
-      await w.write(JSON.stringify({ version: 1, tasks }, null, 2));
-      await w.close();
-      setSave('saved');
-    } catch(e) { console.error(e); setSave('error'); }
-  }
-  function scheduleSave() {
-    setSave('saving');
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(saveToFile, 700);
-  }
-  function setSave(s) {
-    const el = document.getElementById('saveInd');
-    el.className = 'save-ind ' + s;
-    el.textContent = s==='saving'?'Saving…':s==='saved'?'Saved ✓':'⚠ Error';
-    if (s==='saved') setTimeout(()=>{ el.textContent=''; el.className='save-ind'; }, 2200);
-  }
+  async function reloadFromDir() { await loadFiles(); }
 
   // ── Rendering ──────────────────────────────────────────────────────────────
   function renderAll() {
@@ -1143,6 +1054,32 @@ user-select: none;
         " onclick="setStatus('${task.id}','${esc(s)}')">${capitalize(s)}</button>`;
       })
       .join('');
+  }
+
+  // ── Save ───────────────────────────────────────────────────────────────────
+  async function saveToFile() {
+    setSave('saving');
+    try {
+      const body = JSON.stringify({ version: 1, tasks }, null, 2);
+      const res  = await fetch('/save', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setSave('saved');
+    } catch(e) { console.error(e); setSave('error'); }
+  }
+  function scheduleSave() {
+    setSave('saving');
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(saveToFile, 700);
+  }
+  function setSave(s) {
+    const el = document.getElementById('saveInd');
+    el.className = 'save-ind ' + s;
+    el.textContent = s==='saving'?'Saving…':s==='saved'?'Saved ✓':'⚠ Error';
+    if (s==='saved') setTimeout(()=>{ el.textContent=''; el.className='save-ind'; }, 2200);
   }
 
   // ── Mutations ──────────────────────────────────────────────────────────────

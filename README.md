@@ -116,10 +116,10 @@ This folder is self-contained and has no dependencies on the parent project.
 To use it across multiple projects, host it as its own repo and copy or submodule it in.
 
 ```bash
-cd todos
 git init
 git add .
 git commit -m "init"
+gh repo create todosrepo --public --push --source=.
 ```
 
 Each project keeps its own `config.json`, `tasks.json`, and `INBOX.md` — all gitignored from the parent if you prefer, or committed alongside the code.
